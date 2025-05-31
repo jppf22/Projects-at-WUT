@@ -1,0 +1,141 @@
+﻿@model IEnumerable<Voyagers.ViewModels.TripAndParticipants>
+@using Voyagers.ViewModels
+@using Microsoft.AspNetCore.Identity
+@using System.IO
+@using Voyagers.Services
+@inject IEnumerable<Voyagers.Models.TripParticipants> TripParticipants
+@inject UserManager<IdentityUser> UserManager  
+@inject SignInManager<IdentityUser> SignInManager  
+@inject IWebHostEnvironment WebHostEnvironment
+
+
+@{  
+    ViewData["Title"] = "Available Trips";  
+    var currentUserId = UserManager.GetUserId(User);
+}  
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<h1>Available Trips</h1>  
+
+<p>  
+    <a asp-action="Create">Create New</a>  
+</p>  
+
+<!-- There are non mandatory fields that when not filled, make the card not appear, add conditions to ensure this doesn't happen-->
+<div class="row">
+    @foreach (var trip_with_participants in Model)
+    {  //CHOICE 1: Add a sorting that prioritises non-registered trips OR only show non-registered trips
+
+        @if (trip_with_participants.Trip.Date >= DateTime.Now) // REQUIREMENT: Only show trips that are in the future
+        {
+            <div class="col-sm-4 mb-3 mb-sm-0 py-2">
+
+                @{  
+                    var card_class = "card";  
+
+                    if (trip_with_participants.Owners.Any(x => x.UserID == currentUserId))  
+                    {  
+                        card_class = "card card-owned position-relative";  
+                    }  
+                }
+
+                <div class=@card_class>
+                    @if (trip_with_participants.Owners.Any(x => x.UserID == currentUserId))
+                    {
+                        <div class="position-absolute top-0 end-0 p-2 edit-delete-buttons">
+                            <a asp-action="Edit" asp-route-id="@trip_with_participants.Trip.TripID" class="btn btn-sm btn-warning me-1">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@trip_with_participants.Trip.TripID" class="btn btn-sm btn-danger">Delete</a>
+                        </div>
+                    }
+ 
+                    @{
+                        var city_name = trip_with_participants.Trip.Location.ToLower();
+                        city_name = char.ToUpper(city_name[0]) + city_name.Substring(1);
+
+                        var city_img_path = Url.Content("~/images/destinations/" + city_name + ".jpg");
+                        var filePath = System.IO.Path.Combine(WebHostEnvironment.WebRootPath, "images", "destinations", city_name + ".jpg");
+
+                        if (!System.IO.File.Exists(filePath))
+                        {
+                            city_img_path = Url.Content("~/images/destinations/City.jpg");
+                        }
+                    }
+
+                    <img src="@city_img_path" class="img-fluid card-img-top" style="max-height: 250px">
+                    <div class="card-header pt-3">
+                            <div class="pb-3">
+                                <h5 class="card-title text-primary">
+                                    @Html.DisplayFor(modelItem => trip_with_participants.Trip.Location)
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= trip_with_participants.Trip.Rating)
+                                        {
+                                            <span class="star">&#9733;</span>
+                                        }
+                                    }
+                                </h5>
+                            </div>
+
+                            <div class="row text-body">
+                                <div class="col">
+                                    <strong>Date: </strong>@Html.DisplayFor(modelItem => trip_with_participants.Trip.Date)
+                                </div>
+                                <div class="col">
+                                    <strong>Duration: </strong>@Html.DisplayFor(modelItem => trip_with_participants.Trip.Duration) days
+                                </div>
+                            </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-start">
+                                    @{
+                                        //DOUBT: SHOULD THIS BE PERFORMED IN THE CONTROLLER?
+                                        var spotsLeft = trip_with_participants.Trip.Capacity - trip_with_participants.Participants?.Count;
+                                    }
+                                    <h3 class="text-success">@Html.DisplayFor(modelItem => trip_with_participants.Trip.Price)</h3>
+                                    <p class="text-secondary"><strong class="h4 text-capitalize">@spotsLeft</strong> Spots Left</p>
+                                </div>
+                            </div>
+                            <div class="col d-flex justify-content-end align-content-center align-items-center">
+
+                                <form asp-action="Details" value="@trip_with_participants.Trip.TripID">
+                                    <input type="hidden" name="id" value="@trip_with_participants.Trip.TripID" />
+                                    <button class="btn btn-lg btn-light btn-outline-info" type="submit">Details</button>
+                                </form>
+
+                                @if (trip_with_participants.Participants != null && !trip_with_participants.Participants.Any(p => p.UserID == currentUserId)) //CHOICE 1 (Impacts): If not registered for the trip, show Register button
+                                {
+                                    <form asp-action="Register" method="post">
+                                        <input type="hidden" name="id" value="@trip_with_participants.Trip.TripID" />
+                                        <button class="btn btn-lg btn-light btn-outline-success" type="submit">Register</button>
+                                    </form>
+                                }
+                                else if (trip_with_participants.Owners.Any(x => x.UserID == currentUserId))
+                                {
+                                    // The Trip Owner can only Unregister if deleting the Trip or Transfering Ownership
+                                }
+                                else //Else, show the Unregister button
+                                {
+                                    <form asp-action="Unregister" method="post">
+                                        <input type="hidden" name="id" value="@trip_with_participants.Trip.TripID" />
+                                        <button class="btn btn-lg btn-light btn-outline-danger" type="submit">Unregister</button>
+                                    </form>
+                                }
+                            </div>
+                            <div class="col"> <!-- DEBUG ONLY -->
+                                Last concurrency token: @Last_Token_Bits.getLastTokenBits(trip_with_participants.Trip.ConcurrencyToken)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+     }
+</div>

@@ -1,0 +1,98 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* My CSS custom stylizing */
+
+
+/* NAV BAR styles*/
+.navbar-brand {
+    font-size : 32px;
+    font-weight: bold;
+}
+.nav-item , .navbar-brand {
+    transition: background-color 0.3s ease, border-bottom 0.3s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-item:hover , .navbar-brand:hover {
+    background-color: rgba(248, 249, 250, 1);
+    border-bottom: 2px solid #258cfb;
+}
+
+/* STAR RATING styles*/
+.rating {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rating .star {
+  color: gold;
+  font-size: 2rem;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+.rating .star.off {
+  color: lightgray;
+}
+
+@media (max-width: 767px) {
+  .rating .star {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  .rating .star {
+    font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .rating .star {
+    font-size: 2rem;
+  }
+}
+
+/* CARD EDIT AND DELETE BUTTONS */
+
+.card:hover .card-owned{
+    opacity: 0.7;
+}
+
+.card:hover .edit-delete-buttons {
+    display: block;
+}
+
+.edit-delete-buttons {
+    display: none;
+}

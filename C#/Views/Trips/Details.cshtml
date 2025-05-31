@@ -1,0 +1,136 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Voyagers.Models
+@inject UserManager<IdentityUser> UserManager
+
+
+@model Voyagers.ViewModels.TripDetailsModel
+
+@{
+    ViewData["Title"] = "Details";
+    var currentUserId = UserManager.GetUserId(User);
+    var ownersIds = Model.Owners?.FindAll(x => x.TripID == Model.Trip.TripID)?.Select(x => x.UserID);
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Trip</h4>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Location)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Location)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Date)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Date)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Description)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Description)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Duration)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Duration)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Capacity)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Capacity)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Price)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Price)
+        </dd>
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Trip.Rating)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Trip.Rating)
+        </dd>
+    </dl>
+</div>
+<div>
+    <h4>Participants</h4>
+    <hr />
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Role</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Participants != null && Model.Participants.Count != 0)
+            {   
+                @foreach (var participant in Model.Participants)
+                {
+                    <tr>
+                        <th scope="row">
+                            @{
+                                var user = await UserManager.FindByIdAsync(participant.UserID);
+                                var username = user?.UserName ?? "Unknown";
+
+                            }
+                            @username
+                        </th>
+                        @if (ownersIds.Contains(participant.UserID)) // REQUIREMENT: ONLY OWNER CAN EDIT
+                        {
+                            <td>Owner</td>
+                        }
+                        else
+                        {
+                            <td>Participant</td>
+                        }
+                        @if (ownersIds.Contains(currentUserId)) // REQUIREMENT: ONLY OWNER CAN EDIT
+                        {
+                            <td>
+                                @if (!ownersIds.Contains(participant.UserID))
+                                {    
+                                    <form asp-action="RemoveParticipant" method="post">
+                                        <input type="hidden" name="tripId" value="@Model.Trip.TripID" />
+                                        <input type="hidden" name="userId" value="@participant.UserID" />
+                                        <input type="submit" value="Remove" class="btn btn-danger" />
+                                    </form>
+                                    <form asp-action="MakeOwner" method="post">
+                                        <input type="hidden" name="tripId" value="@Model.Trip.TripID" />
+                                        <input type="hidden" name="userId" value="@participant.UserID" />
+                                        <input type="submit" value="Make Owner" class="btn btn-primary" />
+                                    </form>
+                                }
+                                else if(!(currentUserId == participant.UserID))
+                                {
+                                    <form asp-action="RemoveOwner" method="post">
+										<input type="hidden" name="tripId" value="@Model.Trip.TripID" />
+										<input type="hidden" name="userId" value="@participant.UserID" />
+										<input type="submit" value="Remove Owner" class="btn btn-danger" />
+                                    </form>
+                                }
+                            </td>
+						}
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<div>
+    @if (ownersIds.Contains(currentUserId)) // REQUIREMENT: ONLY OWNER CAN EDIT
+    {
+        <a asp-action="Edit" asp-route-id="@Model?.Trip.TripID">Edit</a>;
+        @(" |")
+    }
+    <a asp-action="Index">Back to List</a>
+</div>
